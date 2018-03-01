@@ -117,3 +117,7 @@ Once more, in reverse order, so bottom is most popular.
 topTen <- tail(finalLookFemale, 10)
 write.csv(topTen[,c("Name","Total")], file="./pop_girl_baby_names.csv", row.names=FALSE)
 ```
+
+### My GitHub?
+
+You can find this stuff at: https://github.com/GnomeWorks/MSDS_6306/tree/master/assign5
