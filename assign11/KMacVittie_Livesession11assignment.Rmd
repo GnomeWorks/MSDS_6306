@@ -1,0 +1,118 @@
+---
+title: "KMacVittie_Livesession11assignment"
+author: "Korey MacVittie"
+date: "April 25, 2018"
+output:
+  html_document:
+    df_print: paged
+  prettydoc::html_pretty:
+    highlight: github
+    theme: architect
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load required libraries
+library(dygraphs)
+library(forecast)
+library(xts)
+library(readr)
+library(zoo)
+library(tidyverse)
+```
+
+
+## 1. Warm Up: Brief Financial Data
+```{r}
+# a. Summary of Sample EU Stock Market data set
+head(EuStockMarkets)
+```
+
+```{r}
+# b. Create a rudimentary plot of the DAX
+# add a vertical red line to your plot which divides pre-1997 and post-1997 information
+plot(EuStockMarkets[,"DAX"], col="blue", xlab="Years", ylab="Index Value")
+abline(v=1997, col="red")
+title(main="EU Stock Markets ~ DAX", col.main="red", font.main=4)
+
+```
+
+```{r}
+# c. Decompose the time series into its components 
+EU_DAX <- decompose(EuStockMarkets[,"DAX"], type = "multiplicative")
+plot(EU_DAX, col="blue")
+```
+
+## 2.	Temperature Data
+```{r}
+# a. Use the maxtemp dataset granted by loading fpp2
+library(fpp2)
+```
+
+```{r}
+# b. We are only concerned with information after 1990
+ts <- window(maxtemp, start=1990)
+autoplot(ts, xlab="Year", ylab="Temperature (Celsius)")
+```
+
+```{r}
+# c.	Utilize SES, Simple Exponential Smoothing, to predict the next five years of maximum temperatures in Melbourne.
+fit <- ses(ts, h=5)
+
+# Comparing Forecast Fit
+plot(fit, ylab="Temperature, Celsius", xlab= "Year", main="Comparing forecast fit")
+lines(fitted(fit), col="blue")
+lines(fit$mean, col="blue", type="o")
+```
+
+```{r}
+# c. Find the AICc of this fitted model
+fit$model
+```
+
+
+
+```{r}
+# d. Use a damped Holt’s linear trend to also predict out five years
+holtfit <- holt(ts, initial="optimal", h=5, damped = TRUE)
+
+plot(holtfit, ylab="Temperature (C)", xlab= "Year", main="Comparing forecast fit")
+lines(fitted(holtfit), col="blue", type="o")
+lines(holtfit$mean, col="red")
+```
+
+
+
+```{r}
+holtfit$model
+```
+
+### e.	Compare the AICc of the ses() and holt() models.  Which model is better here?
+141.5302 for SES, compared to 144.5819 for Holt; looks like SES is better.
+
+## 3.	The Wands Choose the Wizard 
+```{r}
+# a. Read in both Unit11TimeSeries_Ollivander and _Gregorovitch.csv as two different data frames
+olli <- read.csv("Unit11TimeSeries_Ollivander.csv", header = FALSE)
+greg <- read.csv("Unit11TimeSeries_Gregorovitch.csv", header = FALSE)
+```
+
+```{r}
+# c. Make each frame an xts object
+olli <- ts(olli, frequency = 1, start = c(1970,1))
+greg <- ts(greg, frequency = 1, start = c(1970,1))
+
+```
+
+```{r}
+# d.	Bind the two xts objects together and create a dygraph from it
+wands <- cbind(olli, greg)
+dygraph(wands) %>%
+  dySeries("olli.V2", label = "Ollivander") %>%
+  dySeries("greg.V2", label = "Gregorovitch") %>%
+  dyOptions(stackedGraph = TRUE) %>%
+  dyRangeSelector(height = 20)
+```
