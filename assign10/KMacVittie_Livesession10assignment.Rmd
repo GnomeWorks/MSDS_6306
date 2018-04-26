@@ -1,0 +1,113 @@
+---
+title: "KMacvittie_Livesession10assignment"
+author: "Korey MacVittie"
+date: "April 25, 2018"
+output:
+  html_document:
+    df_print: paged
+  prettydoc::html_pretty:
+    highlight: github
+    theme: architect
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)  
+library(rvest)    
+library(stringr)   
+library(rebus)     
+library(lubridate)
+library(dplyr)
+```
+
+### 1. Mental Health Clinics 
+```{r}
+# a. Load the dataset
+load("./N-MHSS-2015-DS0001-data/N-MHSS-2015-DS0001-data-r.rda")
+```
+
+```{r}
+# b.Create code which lists the State abbreviations without their counts
+va <- (levels(mh2015_puf$LST))
+head(va)
+```
+
+
+```{r}
+# c. Create a listing of the counts of all VA medical centers in the mainland US by state
+va <-count(mh2015_puf,LST)
+va = va[-c(4,13,14,42,50),]
+head(va)
+```
+
+
+```{r}
+# c. Convert to a dataframe 
+va_med_ctr <- as.data.frame(va)
+str(va_med_ctr)
+```
+
+
+
+
+```{r}
+ggplot(data=va_med_ctr, aes(x=LST, y=n)) +
+  geom_bar(stat="identity", fill="steelblue")+
+  theme(axis.text.x=element_text(size=rel(0.7), angle=90)) +
+  ggtitle("VA Centers in Mainland US") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  labs(x="State Name",y="Number of VA Facilities")
+```
+
+
+
+### 2. Cleaning and Bringing in New Features
+```{r}
+# a. Read statesize.csv into your R environment
+statesize <-read.csv("statesize.csv")
+str(statesize)
+```
+
+
+```{r}
+va_med_ctr <- rename(va_med_ctr, Abbrev = LST)
+```
+
+
+```{r}
+va_state <- full_join(va_med_ctr, statesize, by="Abbrev")
+```
+
+
+```{r}
+# Created a new csv file that holds merged data
+statesize_two <-read.csv("statesize_two.csv")
+```
+
+
+```{r}
+# c. Calculate a new variable in your combined data.frame() which indicates the VA hospitals per thousand square miles
+statesize_two <-statesize_two %>% select(StateName,SqMiles, Facility) %>% mutate(VA_Norm = Facility/SqMiles)
+```
+
+```{r}
+# d.Create another ggplot which considers the VAs per square thousand miles,
+# rather than just frequency
+ggplot(data=statesize_two, aes(x=StateName, y=VA_Norm)) +
+  geom_bar(stat="identity", fill="steelblue")+
+  theme(axis.text.x=element_text(size=rel(0.8), angle=90)) +
+  ggtitle("VA Centers in US (per 1,000 sq miles)") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  labs(x="State Name",y="VA offices per 1,000 sq miles")
+```
+
+###e. What patterns do you see? The smaller states tend to have a higher concentraion of facilities. 
+  Smaller states would have a higher concentration, as they have less area - Alaska is literally like
+  one-third the size of the continental US, and most of it is trackless wilderness. There does seem to
+  be an emphasis on colonial centers and the coasts - both of which make sense, as VAs are probably
+  more useful in states that have strong military presence (in terms of bases and such), and thus have
+  a higher proportion of the population that would make use of such services.
+
